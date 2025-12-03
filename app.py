@@ -26,7 +26,7 @@ def main():
     global pet_process, shared_state
 
     st.title("🐶 Desktop Pet Controller")
-    st.write("控制你的情绪识别桌宠")
+    st.write("Your desktop pet controlling panel.")
 
     # 初始化共享状态
     if shared_state is None:
@@ -74,7 +74,6 @@ def main():
     shared_state["x"] = x
     shared_state["y"] = y
 
-    st.info("参数会实时同步到桌宠界面（无需重启 pet）")
 
 
 if __name__ == "__main__":

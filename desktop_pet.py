@@ -7,18 +7,9 @@ from PIL import Image, ImageTk
 from real_time import start_emotion_stream
 
 # 1. Initialization
-print("[desktop_pet] desktop_pet.py is running")
-x = 2000        # initial x position
-cycle = 0       # current frame in the GIF sequence
-check = 1       # current animation state
-idle_num = [1, 2, 3, 4]
-sleep_num = [10, 11, 12, 13, 15]
-walk_left = [6, 7] 
-walk_right = [8, 9]
-event_number = random.randrange(1, 3, 1)        # randomly choose initial event
 impath = ".//doggy_gif//"
 current_emotion_label = "Neutral"
-current_pet_emotion = "Neutral" 
+current_pet_emotion = "Neutral"
 
 EMOTION_MAP = {
     "Happy": "Happiness",
@@ -54,6 +45,7 @@ def gif_work(cycle, frames, event_number, first_num, last_num):
         event_number = random.randrange(first_num, last_num + 1, 1)
     return cycle, event_number
 
+
 def load_gif_scaled(path, scale=1.0):
     print(f"[desktop_pet] Loading scaled GIF from {path}, scale={scale}")
     frames = []
@@ -86,9 +78,7 @@ sad_frames      = load_gif_scaled(impath + "sad_doggy.gif", scale)
 angry_frames    = load_gif_scaled(impath + "angry_doggy.gif", scale)
 surprise_frames = load_gif_scaled(impath + "surprise_doggy.gif", scale)
 
-# 你有多个 neutral，可以随便选一个，或者以后做随机轮换
 neutral_frames1 = load_gif_scaled(impath + "neutral_doggy1.gif", scale)
-# 先用第一套
 neutral_frames = neutral_frames1
 
 ANIMATIONS = {
@@ -137,6 +127,7 @@ def show_speech_bubble(emotion):
 
     bubble.after(3000, bubble.destroy)
 
+
 def on_emotion_from_camera(label, conf, probs):
     """
     摄像头识别出新情绪时会回调到这里。
@@ -149,6 +140,7 @@ def on_emotion_from_camera(label, conf, probs):
     current_pet_emotion = EMOTION_MAP.get(label, "Neutral")
     print(f"[Callback] Detected {label} (conf={conf:.2f}), pet emotion = {current_pet_emotion}")
 
+
 def apply_emotion_to_pet():
     """
     每隔一段时间，根据当前情绪弹出一次气泡
@@ -158,6 +150,7 @@ def apply_emotion_to_pet():
     show_speech_bubble(current_pet_emotion)
 
     window.after(4000, apply_emotion_to_pet)  # 4 秒弹一次，你可以改
+
 
 # ============================
 # 6. Main animation loop
@@ -181,10 +174,10 @@ def update(cycle=0):
     next_cycle = (cycle + 1) % len(frames)
     window.after(100, update, next_cycle)   # 每 100ms 播放一帧，可微调速度
 
+
 # ============================
 # 7. Start emotion stream thread
 # ============================
-
 threading.Thread(
     target=start_emotion_stream,
     kwargs={
@@ -194,25 +187,6 @@ threading.Thread(
     daemon=True
 ).start()
 
-# set up window position
-screen_width = window.winfo_screenwidth() # 1920
-screen_height = window.winfo_screenheight() # 1080
-# print(f"[desktop_pet] Screen size: {screen_width}x{screen_height}")
-
-pet_width =20
-pet_height = 20
-
-x_pos = 120
-y_pos = screen_height - pet_height - 1000
-
-window.geometry(f"+{x_pos}+{y_pos}")
-
-# start emotion stream
-threading.Thread(
-    target=start_emotion_stream,
-    kwargs={"callback": on_emotion_from_camera, "show_window": False},
-    daemon=True
-).start()
 
 # main loop
 window.after(2000, apply_emotion_to_pet)
