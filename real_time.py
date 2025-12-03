@@ -175,7 +175,14 @@ class FaceDetector:
 # 4. Real-time inference loop (face + mouth)
 # =========================
 def start_emotion_stream(callback=None, show_window=True):
+    print("[desktop_pet] desktop_pet.py is running")
     cap = cv2.VideoCapture(0)
+    print("Starting camera...")
+    if not cap.isOpened():
+        print("❌ Cannot open camera")
+        return
+    else:
+        print("✅ Camera opened")
     cap.set(3, 1280)
     cap.set(4, 720)
     detector = FaceDetector()
@@ -253,3 +260,6 @@ def start_emotion_stream(callback=None, show_window=True):
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+print("Starting emotion detection stream...")

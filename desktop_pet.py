@@ -3,11 +3,12 @@ import random
 import tkinter as tk
 import threading
 import time
+from PIL import Image, ImageTk
 from real_time import start_emotion_stream
 
 # 1. Initialization
-
-x = 1400        # initial x position
+print("[desktop_pet] desktop_pet.py is running")
+x = 2000        # initial x position
 cycle = 0       # current frame in the GIF sequence
 check = 1       # current animation state
 idle_num = [1, 2, 3, 4]
@@ -45,6 +46,7 @@ label.pack()
 
 def gif_work(cycle, frames, event_number, first_num, last_num):
     """Cycle through frames and switch to next event when one animation ends"""
+    print("[desktop_pet] gif_work is running")
     if cycle < len(frames) - 1:
         cycle += 1
     else:
@@ -52,28 +54,40 @@ def gif_work(cycle, frames, event_number, first_num, last_num):
         event_number = random.randrange(first_num, last_num + 1, 1)
     return cycle, event_number
 
-def load_gif_frames(path):
-    """加载一个 gif 的所有帧，直到读不到为止"""
+def load_gif_scaled(path, scale=1.0):
+    print(f"[desktop_pet] Loading scaled GIF from {path}, scale={scale}")
     frames = []
-    idx = 0
-    while True:
-        try:
-            frame = tk.PhotoImage(file=path, format=f"gif -index {idx}")
-        except tk.TclError:
-            break
-        frames.append(frame)
-        idx += 1
+
+    img = Image.open(path)
+
+    try:
+        while True:
+            frame = img.copy().convert("RGBA")
+
+            w, h = frame.size
+            frame = frame.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+
+            frames.append(ImageTk.PhotoImage(frame))
+
+            img.seek(img.tell() + 1)
+
+    except EOFError:
+        pass
+
     return frames
+
+
 # ============================
 # 4. Load emotion animations
 # ============================
-happy_frames    = load_gif_frames(impath + "happy_doggy.gif")
-sad_frames      = load_gif_frames(impath + "sad_doggy.gif")
-angry_frames    = load_gif_frames(impath + "angry_doggy.gif")
-surprise_frames = load_gif_frames(impath + "surprise_doggy.gif")
+scale = 0.5
+happy_frames    = load_gif_scaled(impath + "happy_doggy.gif", scale)
+sad_frames      = load_gif_scaled(impath + "sad_doggy.gif", scale)
+angry_frames    = load_gif_scaled(impath + "angry_doggy.gif", scale)
+surprise_frames = load_gif_scaled(impath + "surprise_doggy.gif", scale)
 
 # 你有多个 neutral，可以随便选一个，或者以后做随机轮换
-neutral_frames1 = load_gif_frames(impath + "neutral_doggy1.gif")
+neutral_frames1 = load_gif_scaled(impath + "neutral_doggy1.gif", scale)
 # 先用第一套
 neutral_frames = neutral_frames1
 
@@ -96,19 +110,9 @@ emotion_responses = {
     "Neutral":   "Hmm... A calm day feels nice 💤"
 }
 
-# ============================
-# 5. Emotion feedback (speech bubble)
-# ============================
-emotion_responses = {
-    "Happiness": "Yay! I'm so happy with you! 😺",
-    "Sadness":   "Aww... Don't worry, I'm here for you 💕",
-    "Anger":     "Take a deep breath... You’ve got this 💪",
-    "Surprise":  "Whoa! That was unexpected! 😸",
-    "Neutral":   "Hmm... A calm day feels nice 💤"
-}
-
 def show_speech_bubble(emotion):
     """Show a floating speech bubble near the dog"""
+    print(f"[desktop_pet] Showing speech bubble for emotion: {emotion}")
     response = emotion_responses.get(emotion, "I'm here with you!")
 
     bubble = tk.Toplevel(window)
@@ -127,9 +131,9 @@ def show_speech_bubble(emotion):
     )
     label_bubble.pack()
 
-    cat_x = window.winfo_x()
-    cat_y = window.winfo_y()
-    bubble.geometry(f"+{cat_x + 250}+{cat_y + 50}")
+    pet_x = window.winfo_x()
+    pet_y = window.winfo_y()
+    bubble.geometry(f"+{pet_x + 250}+{pet_y + 50}")
 
     bubble.after(3000, bubble.destroy)
 
@@ -138,6 +142,8 @@ def on_emotion_from_camera(label, conf, probs):
     摄像头识别出新情绪时会回调到这里。
     label: "Happy" / "Sad" / "Angry" / ...
     """
+    print("[desktop_pet] on_emotion_from_camera is called")
+    print(f"[Callback] Detected {label} (conf={conf:.2f})")
     global current_emotion_label, current_pet_emotion
     current_emotion_label = label
     current_pet_emotion = EMOTION_MAP.get(label, "Neutral")
@@ -160,6 +166,7 @@ def update(cycle=0):
     """
     根据 current_pet_emotion 播放对应 gif 帧
     """
+    print("[desktop_pet] update is running")
     global label
 
     frames = ANIMATIONS.get(current_pet_emotion, neutral_frames)
@@ -177,18 +184,37 @@ def update(cycle=0):
 # ============================
 # 7. Start emotion stream thread
 # ============================
+
 threading.Thread(
     target=start_emotion_stream,
     kwargs={
         "callback": on_emotion_from_camera,
-        "show_window": False
+        "show_window": False   # do not show the camera window
     },
     daemon=True
 ).start()
 
-# ============================
-# 8. Start Tk loop
-# ============================
-window.after(2000, apply_emotion_to_pet)  # 2 秒后开始气泡循环
-window.after(10, update, 0)               # 立刻启动动画循环
+# set up window position
+screen_width = window.winfo_screenwidth() # 1920
+screen_height = window.winfo_screenheight() # 1080
+# print(f"[desktop_pet] Screen size: {screen_width}x{screen_height}")
+
+pet_width =20
+pet_height = 20
+
+x_pos = 120
+y_pos = screen_height - pet_height - 1000
+
+window.geometry(f"+{x_pos}+{y_pos}")
+
+# start emotion stream
+threading.Thread(
+    target=start_emotion_stream,
+    kwargs={"callback": on_emotion_from_camera, "show_window": False},
+    daemon=True
+).start()
+
+# main loop
+window.after(2000, apply_emotion_to_pet)
+window.after(2000, update, 0)
 window.mainloop()

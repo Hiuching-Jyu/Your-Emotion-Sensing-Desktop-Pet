@@ -1,18 +1,45 @@
+from rembg import remove
+from PIL import Image
+import numpy as np
+import cv2
 import os
 import shutil
 import ffmpeg
-from rembg import remove
-from PIL import Image
 
 def remove_background_from_frame(frame: Image.Image) -> Image.Image:
-    """use rembg to remove background from a single frame"""
-    frame_rgba = remove(frame)  
-    return frame_rgba
+    """use rembg to remove background & enhance alpha mask"""
+    
+    # step 1: 原始输出
+    out = remove(frame)
+    out_np = np.array(out)
+
+    # 取 alpha 通道
+    alpha = out_np[:, :, 3]
+
+    # step 2: 强化 alpha，让它更 solid
+    # 二值化：防止边缘半透明
+    _, alpha_bin = cv2.threshold(alpha, 127, 255, cv2.THRESH_BINARY)
+
+    # step 3: 形态学操作：填洞 & 去噪点
+    kernel = np.ones((6, 6), np.uint8)
+
+    # 填补小孔洞
+    alpha_closed = cv2.morphologyEx(alpha_bin, cv2.MORPH_CLOSE, kernel)
+
+    # 去掉小碎点
+    alpha_opened = cv2.morphologyEx(alpha_closed, cv2.MORPH_OPEN, kernel)
+
+    # step 4: 用增强后的 alpha 替换回去
+    out_np[:, :, 3] = alpha_opened
+
+    # 返回增强后的 RGBA
+    return Image.fromarray(out_np)
 
 def video_to_transparent_gif(mp4_path, gif_path, fps=15):
     """
     single video file convert to transparent gif
     """
+    print(f"\nConverting video to transparent GIF:\n  Input: {mp4_path}\n  Output: {gif_path}")
     temp_frames_dir = "temp_frames"
 
     # create temp dir for frames
@@ -42,6 +69,9 @@ def video_to_transparent_gif(mp4_path, gif_path, fps=15):
     if not frames:
         print("No frames extracted, skip:", mp4_path)
         return
+    
+    # convert frames to 'P' mode with adaptive palette for transparency
+    frames = [f.convert("P", palette=Image.ADAPTIVE, colors=128) for f in frames]
 
     print(f"Saving transparent GIF to: {gif_path}")
     frames[0].save(
@@ -63,6 +93,7 @@ def batch_convert_videos(input_dir, fps=15):
     """
     transfer the mp4 videos in input_dir to transparent gifs
     """
+    print(f"Batch converting videos in directory: {input_dir}")
     for fname in os.listdir(input_dir):
         if not fname.lower().endswith(".mp4"):
             continue
@@ -72,6 +103,7 @@ def batch_convert_videos(input_dir, fps=15):
         gif_path = os.path.join(input_dir, gif_name)
 
         video_to_transparent_gif(mp4_path, gif_path, fps=fps)
+
 
 if __name__ == "__main__":
     INPUT_DIR = "./doggy_gif"
