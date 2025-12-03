@@ -106,5 +106,5 @@ def batch_convert_videos(input_dir, fps=15):
 
 
 if __name__ == "__main__":
-    INPUT_DIR = "./doggy_gif"
+    INPUT_DIR = "./tomcat_gif"
     batch_convert_videos(INPUT_DIR, fps=15)
