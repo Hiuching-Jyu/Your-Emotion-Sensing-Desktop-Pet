@@ -174,15 +174,14 @@ class FaceDetector:
 # =========================
 # 4. Real-time inference loop (face + mouth)
 # =========================
-def start_emotion_stream(callback=None, show_window=True):
-    print("[desktop_pet] desktop_pet.py is running")
+def start_emotion_stream(callback=None, show_window=True, frame_holder=None, state=None):
+    print("[real_time] Starting emotion detection stream...")
+    
     cap = cv2.VideoCapture(0)
-    print("Starting camera...")
     if not cap.isOpened():
         print("❌ Cannot open camera")
         return
-    else:
-        print("✅ Camera opened")
+
     cap.set(3, 1280)
     cap.set(4, 720)
     detector = FaceDetector()
@@ -200,24 +199,25 @@ def start_emotion_stream(callback=None, show_window=True):
 
         boxes = detector.detect(frame)
         label_text = "No face"
-        color = (0, 0, 255)
         emotion_label = None
         conf = 0.0
 
         if len(boxes) > 0:
             # take the largest face
-            areas = [w*h for (x,y,w,h) in boxes]
+            areas = [w * h for (x, y, w, h) in boxes]
             idx = int(np.argmax(areas))
             x, y, w, h = boxes[idx]
+
             pad = int(0.15 * max(w, h))
             x1 = max(0, x - pad)
             y1 = max(0, y - pad)
             x2 = min(frame.shape[1], x + w + pad)
             y2 = min(frame.shape[0], y + h + pad)
+
             face = frame[y1:y2, x1:x2]
 
             if face.size > 0:
-                full_t  = preprocess_full(face).to(device)
+                full_t = preprocess_full(face).to(device)
                 mouth_t = preprocess_mouth(face).to(device)
 
                 with torch.no_grad():
@@ -225,38 +225,54 @@ def start_emotion_stream(callback=None, show_window=True):
                     logits = logits_main + MOUTH_ALPHA * logits_mouth
                     probs = torch.softmax(logits, dim=1)[0].cpu().numpy().astype(np.float32)
 
+                # ---- smoothing ----
                 if ema_probs is None:
                     ema_probs = probs
                 else:
-                    ema_probs = ema_alpha * ema_probs + (1.0 - ema_alpha) * probs
+                    ema_probs = ema_alpha * ema_probs + (1 - ema_alpha) * probs
 
+                # merge Fear into Surprise (your original logic)
                 ema_probs[6] += ema_probs[2]
                 ema_probs[2] = 0
+
                 cls = int(np.argmax(ema_probs))
                 conf = float(ema_probs[cls])
                 emotion_label = emotion_labels[cls]
-                label_text = f"{emotion_label} {conf*100:.1f}%"
-                color = (0, 255, 0)
 
+                label_text = f"{emotion_label} {conf*100:.1f}%"
+
+                # ---- callback for desktop pet ----
                 if callback is not None:
                     callback(emotion_label, conf, ema_probs.copy())
 
+                # ---- write to shared_state (for Streamlit UI) ----
+                if state is not None:
+                    state["detected_emotion"] = emotion_label
+        else:
+            # 没检测到脸，也告诉 state
+            if state is not None:
+                state["detected_emotion"] = "No face"
+
+        # ---- send frame to Streamlit ----
+        if frame_holder is not None:
+            frame_holder["frame"] = frame.copy()
+
+        # FPS calculation
         now = time.time()
         fps = 0.9 * fps + 0.1 * (1.0 / (now - prev_time))
         prev_time = now
 
         if show_window:
-            cv2.putText(frame, f"FPS: {fps:.1f}", (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(frame, label_text, (20, 80),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            cv2.putText(frame, f"FPS: {fps:.1f}", (20,40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2)
+
             cv2.imshow("FER-7cls", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         else:
-            # even if not showing window, we need to call waitKey to keep OpenCV happy
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            cv2.waitKey(1)
 
     cap.release()
     cv2.destroyAllWindows()
