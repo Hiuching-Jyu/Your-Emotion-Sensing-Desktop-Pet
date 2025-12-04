@@ -1,88 +1,139 @@
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from multiprocessing import Process, Manager
 import tkinter as tk
-from tkinter import ttk
-from multiprocessing import Manager
-import call_desktop_pet
 from PIL import Image, ImageTk
-import os
-
-# 预览 GIF 文件路径
-PET_OPTIONS = {
-    "westie": "./westie_gif/happy_westie.gif",
-    "tom": "./tom_gif/happy_tom.gif"
-}
+import call_desktop_pet
 
 
-class PetSelector(tk.Tk):
+# ---- 启动桌宠进程 ----
+def launch_pet(state):
+    call_desktop_pet.run_pet(state)
+
+
+class DesktopPetUI(tb.Window):
     def __init__(self):
-        super().__init__()
+        super().__init__(title="Desktop Pet Controller", themename="flatly")  # 🎨 统一浅色主题
 
-        self.title("Choose Your Pet")
-        self.geometry("420x350")
-        self.resizable(False, False)
-
-        ttk.Label(self, text="Choose Your Desktop Pet", font=("Segoe UI", 13, "bold")).pack(pady=10)
-
-        self.pet_type = tk.StringVar(value="westie")
-
-        frame = ttk.Frame(self)
-        frame.pack(pady=10)
-
-        # 两个预览按钮（Westie / Tom）
-        self.create_pet_button(frame, "westie", 0)
-        self.create_pet_button(frame, "tom", 1)
-
-        start_btn = ttk.Button(self, text="Start Pet!", command=self.launch_pet)
-        start_btn.pack(pady=15)
-
-    def create_pet_button(self, parent, name, col):
-        gif_path = PET_OPTIONS[name]
-        frames = []
-
-        img = Image.open(gif_path)
-        try:
-            while True:
-                frame = ImageTk.PhotoImage(img.copy().resize((150, 150)))
-                frames.append(frame)
-                img.seek(img.tell() + 1)
-        except EOFError:
-            pass
-
-        gif_label = tk.Label(parent)
-        gif_label.grid(row=0, column=col, padx=15)
-
-        # 点击 GIF 选中宠物
-        gif_label.bind("<Button-1>", lambda e, n=name: self.pet_type.set(n))
-
-        def play_gif(frame_id=0):
-            gif_label.config(image=frames[frame_id])
-            self.after(120, play_gif, (frame_id + 1) % len(frames))
-
-        play_gif()
-
-        ttk.Radiobutton(
-            parent,
-            text=name.capitalize(),
-            variable=self.pet_type,
-            value=name
-        ).grid(row=1, column=col, pady=5)
-
-    def launch_pet(self):
-        """启动桌宠进程"""
-        manager = Manager()
-        shared_state = manager.dict({
-            "running": True,
-            "pet_type": self.pet_type.get(),
+        self.geometry("520x650")
+        self.shared_state = Manager().dict({
+            "running": False,
+            "pet_type": "westie",
             "scale": 1.0,
             "x": 400,
-            "y": 900,
+            "y": 800,
         })
+        self.pet_process = None
 
-        self.destroy()
+        self._build_ui()
 
-        call_desktop_pet.run_pet(shared_state)
+    # -------------------------------------------------
+    # 构建 UI
+    # -------------------------------------------------
+    def _build_ui(self):
+
+        title = tb.Label(self, text="Desktop Pet Controller",
+                         font=("Segoe UI", 18, "bold"))
+        title.pack(pady=15)
+
+        # ---- Start / Stop ----
+        button_frame = tb.Frame(self)
+        button_frame.pack(pady=5)
+
+        start_btn = tb.Button(button_frame, text="▶ Start Pet",
+                              bootstyle=SUCCESS, command=self.start_pet)
+        stop_btn = tb.Button(button_frame, text="⏹ Stop Pet",
+                             bootstyle=DANGER, command=self.stop_pet)
+
+        start_btn.grid(row=0, column=0, padx=10)
+        stop_btn.grid(row=0, column=1, padx=10)
+
+        tb.Separator(self).pack(fill="x", pady=10)
+
+        # ---- Preview ----
+        tb.Label(self, text="Preview Pets", font=("Segoe UI", 14, "bold")).pack()
+
+        preview_frame = tb.Frame(self)
+        preview_frame.pack(pady=10)
+
+        # 使用 4:3 比例（宽：高 = 160：120）
+        preview_size = (160, 120)
+
+        self.preview_westie = ImageTk.PhotoImage(
+            Image.open("./westie_gif/preview_westie.gif").resize(preview_size)
+        )
+        self.preview_tom = ImageTk.PhotoImage(
+            Image.open("./tom_gif/preview_tom.gif").resize(preview_size)
+        )
 
 
+        self._create_preview(preview_frame, "Westie", self.preview_westie, 0)
+        self._create_preview(preview_frame, "Tom", self.preview_tom, 1)
+
+        tb.Separator(self).pack(fill="x", pady=10)
+
+        # ---- Choose Pet ----
+        tb.Label(self, text="Choose Your Pet:", font=("Segoe UI", 11)).pack()
+        self.pet_var = tb.StringVar(value="westie")
+
+        pet_selector = tb.Combobox(self, textvariable=self.pet_var,
+                                   values=["westie", "tom"], bootstyle=LIGHT)
+        pet_selector.pack(pady=5)
+
+        # ---- Scale ----
+        tb.Label(self, text="Scale:").pack()
+        self.scale_var = tk.DoubleVar(value=1.0)
+        tb.Scale(self, from_=0.2, to=2.0, variable=self.scale_var,
+                 bootstyle=INFO).pack(fill="x", padx=40)
+
+        # ---- X ----
+        tb.Label(self, text="X Position:").pack()
+        self.x_var = tk.IntVar(value=400)
+        tb.Scale(self, from_=0, to=2000, variable=self.x_var,
+                 bootstyle=PRIMARY).pack(fill="x", padx=40)
+
+        # ---- Y ----
+        tb.Label(self, text="Y Position:").pack()
+        self.y_var = tk.IntVar(value=800)
+        tb.Scale(self, from_=0, to=1200, variable=self.y_var,
+                 bootstyle=SECONDARY).pack(fill="x", padx=40)
+
+    # -------------------------------------------------
+    # Preview 区块（背景自动统一，不会再有灰色）
+    # -------------------------------------------------
+    def _create_preview(self, parent, name, image, col):
+        frame = tb.Frame(parent, padding=10)
+        frame.grid(row=0, column=col, padx=20)
+
+        tb.Label(frame, text=name, font=("Segoe UI", 12, "bold")).pack()
+        tb.Label(frame, image=image).pack()
+
+    # -------------------------------------------------
+    # Start / Stop
+    # -------------------------------------------------
+    def start_pet(self):
+        if self.pet_process and self.pet_process.is_alive():
+            return
+
+        self.shared_state["running"] = True
+        self.shared_state["pet_type"] = self.pet_var.get()
+        self.shared_state["scale"] = self.scale_var.get()
+        self.shared_state["x"] = self.x_var.get()
+        self.shared_state["y"] = self.y_var.get()
+
+        self.pet_process = Process(target=launch_pet, args=(self.shared_state,))
+        self.pet_process.start()
+
+    def stop_pet(self):
+        if self.pet_process and self.pet_process.is_alive():
+            self.shared_state["running"] = False
+            self.pet_process.terminate()
+            self.pet_process = None
 
 
+# -------------------------------------------------
+# Main
+# -------------------------------------------------
 if __name__ == "__main__":
-    PetSelector().mainloop()
+    app = DesktopPetUI()
+    app.mainloop()
