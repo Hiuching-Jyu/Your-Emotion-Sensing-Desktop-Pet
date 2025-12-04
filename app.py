@@ -2,6 +2,8 @@ import streamlit as st
 from multiprocessing import Process, Manager
 import time
 import os
+import threading
+from streamlit_js_eval import streamlit_js_eval
 
 # ---- 全局存储桌宠进程 ----
 pet_process = None
@@ -34,9 +36,9 @@ def main():
         shared_state = manager.dict({
             "running": False,
             "pet_type": "westie",
-            "scale": 0.5,
-            "x": 200,
-            "y": 600,
+            "scale": 1.1,
+            "x": 400,
+            "y": 1000,
         })
 
     # ---- 控制启动/停止 ----

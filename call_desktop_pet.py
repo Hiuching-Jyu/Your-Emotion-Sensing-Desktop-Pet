@@ -13,6 +13,7 @@ def run_pet(state):
 
     # 因为 desktop_pet.py 是一个完整程序 (Tk + mainloop)，导入后会直接运行
     import desktop_pet
+    desktop_pet.start_pet(state)
 
     # 开启一个线程持续同步位置与大小
     def sync_state():
