@@ -3,36 +3,34 @@ import multiprocessing
 import time
 import threading
 
+# ============================
+# 1. Run Desktop Pet
+# ============================
 def run_pet(state):
-    """
-    启动桌宠：在这里导入 desktop_pet.py 让它运行
-    不能在主进程 import desktop_pet，否则会卡住 Streamlit
-    """
 
     print("[call_desktop_pet] Starting pet...")
 
-    # 因为 desktop_pet.py 是一个完整程序 (Tk + mainloop)，导入后会直接运行
     import desktop_pet
     desktop_pet.start_pet(state)
 
-    # 开启一个线程持续同步位置与大小
+    # Turn on a thread to sync position and scale from shared state
     def sync_state():
         while True:
             try:
-                # 从共享 state 提取位置与缩放
+                # extract position and scale
                 x = state["x"]
                 y = state["y"]
                 scale = state["scale"]
 
-                # 更新 Tkinter 窗口
+                # update position
                 desktop_pet.window.geometry(f"+{x}+{y}")
 
-                # 更新缩放（需要你在 desktop_pet 里接收，我已提示修改）
+                # update scale
                 desktop_pet.scale = scale
 
             except Exception as e:
                 print("[call_desktop_pet] Sync error:", e)
 
-            time.sleep(0.2)  # 每 200ms 同步一次
+            time.sleep(0.2)  # sync every 200ms
 
     threading.Thread(target=sync_state, daemon=True).start()

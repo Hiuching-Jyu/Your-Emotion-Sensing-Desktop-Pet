@@ -7,12 +7,18 @@ import streamlit as st
 from PIL import Image, ImageTk
 from real_time import start_emotion_stream
 
+# ============================
+# 1. Main function to start the desktop pet
+# ============================
 def start_pet(shared_state):
     global state, window, label, scale
     global ANIMATIONS, neutral_frames
     state = shared_state
     pet_type = state.get("pet_type", "westie")
 
+    # ============================
+    # 1.1 Determine GIF path
+    # ============================
     if pet_type == "westie":
         gif_path = "./westie_gif/"
     elif pet_type == "tom":
@@ -22,7 +28,7 @@ def start_pet(shared_state):
 
 
     # ============================
-    # 2. Tkinter window setup
+    # 1.2 Tkinter window setup
     # ============================
     window = tk.Tk()
     window.overrideredirect(True)       # remove window decorations
@@ -31,7 +37,7 @@ def start_pet(shared_state):
     window.config(bg='black')
 
     # ============================
-    # 让桌宠窗口可拖动
+    # 1.3 Make window draggable
     # ============================
     def start_move(event):
         window.x_offset = event.x
@@ -42,13 +48,16 @@ def start_pet(shared_state):
         y = event.y_root - window.y_offset
         window.geometry(f"+{x}+{y}")
     
+    # ============================
+    # 1.4 Create label to hold GIF
+    # ============================
     window.bind("<Button-1>", start_move)
     window.bind("<B1-Motion>", on_move)
     label = tk.Label(window, bd=0, bg='black')
     label.pack()
 
     # ============================
-    # 4. Load emotion animations
+    # 1.5 Load emotion animations
     # ============================
     scale = float(state.get("scale", 1.0))
     if pet_type == "tom":
@@ -66,28 +75,32 @@ def start_pet(shared_state):
         "Neutral":   neutral_frames,
     }
     # ============================
-    # 7. Start emotion stream thread
+    # 1.6 Start emotion stream thread
     # ============================
     threading.Thread(
         target=start_emotion_stream,
         kwargs={
             "callback": on_emotion_from_camera,
             "show_window": False,
-            "frame_holder": state,        # 用同一个 state 存 frame
-            "state": state                # 存 emotion
+            "frame_holder": state,        # save frames
+            "state": state                # save state
         },
         daemon=True
     ).start()
 
 
-    # main loop
+
+    # ============================
+    # 1.7 Start applying emotion to pet and animation loop
+    # ============================
     window.after(2000, apply_emotion_to_pet)
     window.after(2000, update, 0)
     window.mainloop()
 
 
-
-# 1. Initialization
+# ============================
+# 2.  Initialization
+# ============================
 current_emotion_label = "Neutral"
 current_pet_emotion = "Neutral"
 
@@ -101,9 +114,9 @@ EMOTION_MAP = {
     "Disgust": "Sadness",
 }
 
-
+# ============================
 # 3. Helper function: GIF frame cycling
-
+# ============================
 def gif_work(cycle, frames, event_number, first_num, last_num):
     """Cycle through frames and switch to next event when one animation ends"""
     print("[desktop_pet] gif_work is running")
@@ -138,10 +151,8 @@ def load_gif_scaled(path, scale=1.0):
     return frames
 
 
-
-
 # ============================
-# 5. Emotion feedback (speech bubble)
+# 4. Emotion feedback (speech bubble)
 # ============================
 emotion_responses = {
     "Happiness": "Yay! I'm so happy with you! 😺",
@@ -151,7 +162,7 @@ emotion_responses = {
     "Neutral":   "Hmm... A calm day feels nice 💤"
 }
 
-bubble_window = None   # 全局存储唯一气泡窗口
+bubble_window = None   
 
 def _create_round_rect(self, x1, y1, x2, y2, r=20, **kwargs):
     points = [
@@ -170,15 +181,18 @@ def _create_round_rect(self, x1, y1, x2, y2, r=20, **kwargs):
     ]
     return self.create_polygon(points, smooth=True, **kwargs)
 
-# 注入到 Canvas 类中
+# Using canvas extension to create rounded rectangle
 tk.Canvas.create_round_rect = _create_round_rect
 
+# ============================
+# 5. Show speech bubble
+# ============================
 def show_speech_bubble(emotion: str):
     global bubble_window, window, label
 
     response = emotion_responses.get(emotion, "I'm here with you!")
 
-    # 情绪 → emoji
+    # map emotion to emoji
     emotion_emoji = {
         "Happiness": "😺",
         "Sadness": "😢",
@@ -188,7 +202,7 @@ def show_speech_bubble(emotion: str):
     }
     emoji = emotion_emoji.get(emotion, "😐")
 
-    # 关闭旧 bubble
+    # close the previous bubble if exists
     if bubble_window is not None:
         try:
             bubble_window.destroy()
@@ -196,7 +210,7 @@ def show_speech_bubble(emotion: str):
             pass
         bubble_window = None
 
-    # 父窗口
+    # create new bubble
     bubble = tk.Toplevel(window)
     bubble.overrideredirect(True)
     bubble.attributes("-topmost", True)
@@ -210,7 +224,7 @@ def show_speech_bubble(emotion: str):
     )
     outer.pack()
         
-    # 整体白底卡片
+    # white card with rounded corners
     card = tk.Frame(
         outer,
         bg="white",
@@ -220,25 +234,25 @@ def show_speech_bubble(emotion: str):
     card.pack()
 
     # ============================
-    # 上层：Detected emotion（低调）
+    # 5.1 Upper layer: Detected emotion (subtle)
     # ============================
     header = tk.Label(
         card,
         text=f"Detected emotion:\n {emoji}  {emotion}",
         font=("Segoe UI", 9, "bold"),
         bg="white",
-        fg="#7A7A7A",    # 柔和灰色，不显眼
+        fg="#7A7A7A",    
         anchor="w",
         pady=2
     )
     header.pack(fill="x")
 
-    # 分割线（淡灰色）
+    # separate line
     divider = tk.Frame(card, bg="#E0E0E0", height=1)
     divider.pack(fill="x", pady=(3, 4))
 
     # ============================
-    # 下层：宠物回应（显眼主视觉）
+    # 5.2 Lower layer: Response text
     # ============================
     text_label = tk.Label(
         card,
@@ -257,7 +271,7 @@ def show_speech_bubble(emotion: str):
     bw = bubble.winfo_width()
     bh = bubble.winfo_height()
 
-    # 位置：宠物右下
+    # bubble's position: top-right of pet
     
     pet_x = window.winfo_x()
     pet_y = window.winfo_y()
@@ -275,10 +289,12 @@ def show_speech_bubble(emotion: str):
     bubble_window = bubble
     bubble.after(3000, bubble.destroy)
 
+# ============================
+# 6. Get emotion callback
+# ============================
 def on_emotion_from_camera(label, conf, probs):
     """
-    摄像头识别出新情绪时会回调到这里。
-    label: "Happy" / "Sad" / "Angry" / ...
+    callback from real_time.py when an emotion is detected
     """
     # print("[desktop_pet] on_emotion_from_camera is called")
     # print(f"[Callback] Detected {label} (conf={conf:.2f})")
@@ -287,26 +303,27 @@ def on_emotion_from_camera(label, conf, probs):
     current_pet_emotion = EMOTION_MAP.get(label, "Neutral")
     # print(f"[Callback] Detected {label} (conf={conf:.2f}), pet emotion = {current_pet_emotion}")
 
-
+# ============================
+# 7. Apply emotion to pet
+# ============================
 def apply_emotion_to_pet():
     """
-    每隔一段时间，根据当前情绪弹出一次气泡
+    pop up speech bubble based on current emotion
     """
     global current_pet_emotion
     # print(f"[desktop_pet] Emotion detected: {current_emotion_label}")
     # print(f"[desktop_pet] Mapped to pet emotion: {current_pet_emotion}")
 
     window.after(4000, apply_emotion_to_pet)
-    # 调用气泡弹窗（使用宠物当前情绪）
     show_speech_bubble(current_pet_emotion)
 
 
 # ============================
-# 6. Main animation loop
+# 8. Main animation loop
 # ============================
 def update(cycle=0):
     """
-    根据 current_pet_emotion 播放对应 gif 帧
+    play the GIF animation based on current emotion
     """
     global ANIMATIONS, neutral_frames, current_pet_emotion
     print("[desktop_pet] update is running")
@@ -320,9 +337,9 @@ def update(cycle=0):
     frame = frames[cycle % len(frames)]
     label.configure(image=frame)
 
-    # 下一帧
+    # next cycle
     next_cycle = (cycle + 1) % len(frames)
-    window.after(100, update, next_cycle)   # 每 100ms 播放一帧，可微调速度
+    window.after(100, update, next_cycle)   # 100ms per frame
 
 
 

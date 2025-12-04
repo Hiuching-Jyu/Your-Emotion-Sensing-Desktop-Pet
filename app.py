@@ -5,19 +5,18 @@ import os
 import threading
 from streamlit_js_eval import streamlit_js_eval
 
-# ---- 全局存储桌宠进程 ----
 pet_process = None
 shared_state = None
 
 # ---------------------------
-# 启动桌宠进程
+# 1. Launch pet process
 # ---------------------------
 def launch_pet(state):
     import call_desktop_pet
     call_desktop_pet.run_pet(state)
 
 # ---------------------------
-# Streamlit Web UI
+# 2. Streamlit Web UI
 # ---------------------------
 def main():
     global pet_process, shared_state
@@ -25,7 +24,7 @@ def main():
     st.title("🐶 Desktop Pet Controller")
     st.write("Your desktop pet controlling panel.")
 
-    # 初始化共享状态
+    # 2.1 Init shared state
     if shared_state is None:
         manager = Manager()
         shared_state = manager.dict({
@@ -36,7 +35,7 @@ def main():
             "y": 1000,
         })
 
-    # ---- 控制启动/停止 ----
+    # 2.2 Start / Stop buttons
     col1, col2 = st.columns(2)
 
     with col1:
@@ -58,7 +57,7 @@ def main():
     st.divider()
 
     # ---------------------------
-    # Preview GIF 展示（不参与选择）
+    # 2.3 Pet preview
     # ---------------------------
     st.subheader("Preview Pets")
 
@@ -74,15 +73,15 @@ def main():
 
     st.divider()
 
-    # ---- 选择宠物 ----
+    # 2.4 Pet settings
     pet = st.selectbox("Choose Pet", ["westie", "tom"])
     shared_state["pet_type"] = pet
 
-    # ---- 缩放 ----
+    # 2.5 Scale control
     scale = st.slider("Pet Scale", 0.2, 2.0, shared_state["scale"], 0.1)
     shared_state["scale"] = scale
 
-    # ---- 位置控制 ----
+    # 2.6 Position controls
     x = st.slider("X Position", 0, 2000, shared_state["x"])
     y = st.slider("Y Position", 0, 1200, shared_state["y"])
     shared_state["x"] = x

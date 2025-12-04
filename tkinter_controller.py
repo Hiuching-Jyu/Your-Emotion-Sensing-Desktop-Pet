@@ -7,22 +7,30 @@ import call_desktop_pet
 
 import sys, os
 
+# ============================
+# 0. Resource path for PyInstaller
+# ============================
 def resource_path(relative_path):
-    """在 Python 和 PyInstaller EXE 下都能正确定位资源文件"""
+    
     try:
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# ---- 启动桌宠进程 ----
+# ============================
+# 1. Launch pet process
+# ============================
 def launch_pet(state):
     call_desktop_pet.run_pet(state)
 
 
+# ============================
+# 2. Desktop Pet Controller UI
+# ============================
 class DesktopPetUI(tb.Window):
     def __init__(self):
-        super().__init__(title="Desktop Pet Controller", themename="flatly")  # 🎨 统一浅色主题
+        super().__init__(title="Desktop Pet Controller", themename="flatly")  
 
         self.geometry("520x650")
         self.shared_state = Manager().dict({
@@ -36,9 +44,6 @@ class DesktopPetUI(tb.Window):
 
         self._build_ui()
 
-    # -------------------------------------------------
-    # 构建 UI
-    # -------------------------------------------------
     def _build_ui(self):
 
         title = tb.Label(self, text="Desktop Pet Controller",
@@ -65,7 +70,7 @@ class DesktopPetUI(tb.Window):
         preview_frame = tb.Frame(self)
         preview_frame.pack(pady=10)
 
-        # 使用 4:3 比例（宽：高 = 160：120）
+        # ---- Load preview images ----
         preview_size = (160, 120)
 
         self.preview_westie = ImageTk.PhotoImage(
@@ -108,7 +113,7 @@ class DesktopPetUI(tb.Window):
                  bootstyle=SECONDARY).pack(fill="x", padx=40)
 
     # -------------------------------------------------
-    # Preview 区块（背景自动统一，不会再有灰色）
+    # Preview block
     # -------------------------------------------------
     def _create_preview(self, parent, name, image, col):
         frame = tb.Frame(parent, padding=10)
