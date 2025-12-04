@@ -92,7 +92,7 @@ def start_pet(shared_state):
         target=start_emotion_stream,
         kwargs={
             "callback": on_emotion_from_camera,
-            "show_window": False,
+            "show_window": True,
             "frame_holder": state,        # save frames
             "state": state                # save state
         },

@@ -198,8 +198,8 @@ def start_emotion_stream(callback=None, show_window=True, frame_holder=None, sta
         print("❌ Cannot open camera")
         return
 
-    cap.set(3, 1280)
-    cap.set(4, 720)
+    cap.set(3, 640)   # width
+    cap.set(4, 360)   # height
     detector = FaceDetector()
 
     ema_probs = None
