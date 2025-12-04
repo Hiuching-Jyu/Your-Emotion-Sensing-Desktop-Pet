@@ -1,8 +1,9 @@
+from sys import prefix
 import pyautogui
 import random
 import tkinter as tk
 import threading
-import time
+import streamlit as st
 from PIL import Image, ImageTk
 from real_time import start_emotion_stream
 
@@ -10,6 +11,14 @@ def start_pet(shared_state):
     global state, window, label, scale
     global ANIMATIONS, neutral_frames
     state = shared_state
+    pet_type = state.get("pet_type", "westie")
+
+    if pet_type == "westie":
+        gif_path = "./westie_gif/"
+    elif pet_type == "tom":
+        gif_path = "./tom_gif/"       
+    else:
+        gif_path = "./westie_gif/"     
 
 
     # ============================
@@ -42,14 +51,13 @@ def start_pet(shared_state):
     # 4. Load emotion animations
     # ============================
     scale = float(state.get("scale", 1.0))
-    happy_frames    = load_gif_scaled(impath + "happy_doggy.gif", scale)
-    sad_frames      = load_gif_scaled(impath + "sad_doggy.gif", scale)
-    angry_frames    = load_gif_scaled(impath + "angry_doggy.gif", scale)
-    surprise_frames = load_gif_scaled(impath + "surprise_doggy.gif", scale)
-
-    neutral_frames1 = load_gif_scaled(impath + "neutral_doggy1.gif", scale)
-    neutral_frames = neutral_frames1
-
+    if pet_type == "tom":
+        scale *= 0.2
+    happy_frames    = load_gif_scaled(gif_path + f"happy_{pet_type}.gif", scale)
+    sad_frames      = load_gif_scaled(gif_path + f"sad_{pet_type}.gif", scale)
+    angry_frames    = load_gif_scaled(gif_path + f"angry_{pet_type}.gif", scale)
+    surprise_frames = load_gif_scaled(gif_path + f"surprise_{pet_type}.gif", scale)
+    neutral_frames  = load_gif_scaled(gif_path + f"neutral_{pet_type}.gif", scale)
     ANIMATIONS = {
         "Happiness": happy_frames,
         "Sadness":   sad_frames,
@@ -57,7 +65,6 @@ def start_pet(shared_state):
         "Surprise":  surprise_frames,
         "Neutral":   neutral_frames,
     }
-
     # ============================
     # 7. Start emotion stream thread
     # ============================
@@ -81,7 +88,6 @@ def start_pet(shared_state):
 
 
 # 1. Initialization
-impath = ".//doggy_gif//"
 current_emotion_label = "Neutral"
 current_pet_emotion = "Neutral"
 
@@ -246,16 +252,17 @@ def show_speech_bubble(emotion: str):
         pady=4
     )
     text_label.pack()
-
+    label.update_idletasks()
     bubble.update_idletasks()
     bw = bubble.winfo_width()
     bh = bubble.winfo_height()
 
     # 位置：宠物右下
+    
     pet_x = window.winfo_x()
     pet_y = window.winfo_y()
-    pet_w = label.winfo_width()
-    pet_h = label.winfo_height()
+    pet_w = label.winfo_width() or 200
+    pet_h = label.winfo_height() or 200
 
     final_x = pet_x + pet_w - 5
     final_y = pet_y + pet_h - bh + 5
@@ -289,10 +296,9 @@ def apply_emotion_to_pet():
     # print(f"[desktop_pet] Emotion detected: {current_emotion_label}")
     # print(f"[desktop_pet] Mapped to pet emotion: {current_pet_emotion}")
 
+    window.after(4000, apply_emotion_to_pet)
     # 调用气泡弹窗（使用宠物当前情绪）
     show_speech_bubble(current_pet_emotion)
-
-    window.after(4000, apply_emotion_to_pet)
 
 
 # ============================

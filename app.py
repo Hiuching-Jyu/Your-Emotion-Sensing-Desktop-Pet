@@ -13,13 +13,8 @@ shared_state = None
 # 启动桌宠进程
 # ---------------------------
 def launch_pet(state):
-    """
-    这里不直接 import desktop_pet，因为 Tkinter 必须在新进程运行。
-    我们在桌宠脚本内部读取 shared_state。
-    """
     import call_desktop_pet
     call_desktop_pet.run_pet(state)
-
 
 # ---------------------------
 # Streamlit Web UI
@@ -62,8 +57,25 @@ def main():
 
     st.divider()
 
+    # ---------------------------
+    # Preview GIF 展示（不参与选择）
+    # ---------------------------
+    st.subheader("Preview Pets")
+
+    cols = st.columns(2)
+
+    with cols[0]:
+        st.markdown("### Westie")
+        st.image("./westie_gif/preview_westie.gif", use_container_width=True)
+
+    with cols[1]:
+        st.markdown("### Tom")
+        st.image("./tom_gif/preview_tom.gif", use_container_width=True)
+
+    st.divider()
+
     # ---- 选择宠物 ----
-    pet = st.selectbox("Choose Pet", ["westie"])
+    pet = st.selectbox("Choose Pet", ["westie", "tom"])
     shared_state["pet_type"] = pet
 
     # ---- 缩放 ----
@@ -75,7 +87,6 @@ def main():
     y = st.slider("Y Position", 0, 1200, shared_state["y"])
     shared_state["x"] = x
     shared_state["y"] = y
-
 
 
 if __name__ == "__main__":
