@@ -1,9 +1,20 @@
-from sys import prefix
-import pyautogui
+"""
+Emotion-Responsive Desktop Pet
+------------------------------
+This module implements a desktop pet that animates, emotes, and displays 
+speech bubbles based on real-time facial emotion recognition. The system 
+integrates GIF-based animation, Tkinter UI rendering, and threaded emotion 
+stream processing.
+
+Authors: Xiaoqing Zhu, Yizhou Zhang, Hsin Wang
+University of Pennsylvania
+Date: December 2025
+
+"""
+
 import random
 import tkinter as tk
 import threading
-import streamlit as st
 from PIL import Image, ImageTk
 from real_time import start_emotion_stream
 

@@ -1,3 +1,19 @@
+"""
+Real-Time Facial Emotion Recognition Module
+-------------------------------------------
+This module implements a fully local real-time emotion detection pipeline
+used by the Desktop Pet system. It loads a FER-7 classifier with dual-head
+(full face + mouth ROI) architecture, performs face detection (MediaPipe or
+Haar fallback), preprocesses inputs, and executes inference on each frame.
+The predicted emotion is smoothed over time and can be streamed to external
+components (e.g., Streamlit UI or the desktop pet engine) via callback or
+shared state.
+
+Authors: Xiaoqing Zhu, Yizhou Zhang, Hsin Wang
+University of Pennsylvania
+Date: December 2025
+"""
+
 import cv2
 import numpy as np
 import torch
@@ -249,7 +265,7 @@ def start_emotion_stream(callback=None, show_window=True, frame_holder=None, sta
                 if state is not None:
                     state["detected_emotion"] = emotion_label
         else:
-            # 没检测到脸，也告诉 state
+            # ---- no face detected ----
             if state is not None:
                 state["detected_emotion"] = "No face"
 

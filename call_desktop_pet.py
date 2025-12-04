@@ -1,5 +1,16 @@
-# call_desktop_pet.py
-import multiprocessing
+"""
+Desktop Pet Runtime Bridge
+--------------------------
+This module serves as the process-level bridge between the controller UI and
+the Tkinter-based desktop pet engine. It launches the pet runtime, forwards
+shared state updates, and continuously synchronizes window position and scale
+through a background thread.
+
+Authors: Xiaoqing Zhu, Yizhou Zhang, Hsin Wang
+University of Pennsylvania
+Date: December 2025
+"""
+
 import time
 import threading
 

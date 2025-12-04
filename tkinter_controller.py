@@ -1,3 +1,26 @@
+"""
+Desktop Pet Controller (Tkinter + ttkbootstrap UI)
+---------------------------------------------------
+This module provides a standalone desktop application for configuring and 
+launching an emotion-responsive desktop pet. The interface is implemented using 
+ttkbootstrap for modern UI styling and communicates with the Tkinter-based 
+animation engine through a multiprocessing Manager shared state. 
+
+Key Features:
+- Multi-process architecture: UI in main process, pet animation in separate worker
+- Real-time parameter synchronization (pet type, scale, window position)
+- Built-in preview system for available pet characters
+- PyInstaller-compatible resource path resolution for packaging as an .exe
+- Engineering-ready structure for modular UI + runtime separation
+
+This module is designed as the primary user-facing controller in the full 
+desktop-pet system, coordinating the backend emotion-driven animation engine.
+
+Authors: Xiaoqing Zhu, Yizhou Zhang, Hsin Wang  
+University of Pennsylvania  
+Date: December 2025
+"""
+
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from multiprocessing import Process, Manager

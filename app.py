@@ -1,9 +1,24 @@
+"""
+Desktop Pet Control Panel
+------------------------------------------------
+This module provides a web-based control interface for launching and managing
+the emotion-responsive desktop pet. The system uses Streamlit for UI rendering
+and Python multiprocessing to run the Tkinter-based pet animation in a separate
+process. Shared state is synchronized through a multiprocessing Manager, 
+allowing live updates of pet type, scale, and screen position.
+
+Functionality:
+- Start and stop the desktop pet as an independent process
+- Select pet type and real-time adjust display scale and window position
+- Preview available pets via embedded animations
+- Maintain shared state for runtime parameter synchronization
+
+Authors: Xiaoqing Zhu, Yizhou Zhang, Hsin Wang
+University of Pennsylvania
+Date: December 2025
+"""
 import streamlit as st
 from multiprocessing import Process, Manager
-import time
-import os
-import threading
-from streamlit_js_eval import streamlit_js_eval
 
 pet_process = None
 shared_state = None
