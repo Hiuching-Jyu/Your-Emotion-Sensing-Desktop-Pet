@@ -5,6 +5,15 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import call_desktop_pet
 
+import sys, os
+
+def resource_path(relative_path):
+    """在 Python 和 PyInstaller EXE 下都能正确定位资源文件"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 # ---- 启动桌宠进程 ----
 def launch_pet(state):
@@ -60,10 +69,10 @@ class DesktopPetUI(tb.Window):
         preview_size = (160, 120)
 
         self.preview_westie = ImageTk.PhotoImage(
-            Image.open("./westie_gif/preview_westie.gif").resize(preview_size)
+            Image.open(resource_path("./westie_gif/preview_westie.gif")).resize(preview_size)
         )
         self.preview_tom = ImageTk.PhotoImage(
-            Image.open("./tom_gif/preview_tom.gif").resize(preview_size)
+            Image.open(resource_path("./tom_gif/preview_tom.gif")).resize(preview_size)
         )
 
 
