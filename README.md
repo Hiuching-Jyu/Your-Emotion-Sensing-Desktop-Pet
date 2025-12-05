@@ -22,31 +22,7 @@ You may also choose to **display or hide the camera window**, and **customize th
 ### 🔘 Choosing Panel  
 This is the first interface where the user selects a pet character.
 
-![Choosing Panel](demo_pic/choosing_panel.png)
-
----
-
-### 🐱 Tom – Emotion Display Examples  
-Below are the UI snapshots of the Tom desktop pet under different detected emotions.
-
-| Tom Neutral | Tom Happy |
-|-------------|-----------|
-| ![st_tom_neutral](demo_pic/st_tom_neutral.png) | ![st_tom_happy](demo_pic/st_tom_happy.png) |
-
----
-
-### 🐶 Westie – Emotion Display Examples  
-Westie pet supports all emotion animations. Examples below:
-
-| Angry | Happy | Neutral |
-|--------|--------|----------|
-| ![angry](demo_pic/st_westie_angry.png) | ![happy](demo_pic/st_westie_happy.png) | ![neutral](demo_pic/st_westie_neutral.png) |
-
-| Sad | Surprise |
-|------|-----------|
-| ![sad](demo_pic/st_westie_sad.png) | ![surprise](demo_pic/st_westie_surprise.png) |
-
-These screenshots demonstrate how the animated GIF updates based on real-time emotion detection.
+![Choosing Panel](demo_pic/choosing_panel.png)These screenshots demonstrate how the animated GIF updates based on real-time emotion detection.
 
 ---
 
@@ -61,6 +37,27 @@ This is the browser-based interface for adjusting pet type, scale, and live emot
 This standalone application allows controlling the pet without using a browser.
 
 ![tkinter_main](demo_pic/tkinter_main.png)
+
+---
+### 🐶 Westie – Emotion Display Examples  
+Westie pet supports all emotion animations. Examples below:
+
+| Angry | Happy | Neutral |
+|--------|--------|----------|
+| ![angry](demo_pic/st_westie_angry.png) | ![happy](demo_pic/st_westie_happy.png) | ![neutral](demo_pic/st_westie_neutral.png) |
+
+| Sad | Surprise |
+|------|-----------|
+| ![sad](demo_pic/st_westie_sad.png) | ![surprise](demo_pic/st_westie_surprise.png) |
+
+---
+
+### 🐱 Tom – Emotion Display Examples  
+Below are the UI snapshots of the Tom desktop pet under different detected emotions.
+
+| Tom Neutral | Tom Happy |
+|-------------|-----------|
+| ![st_tom_neutral](demo_pic/st_tom_neutral.png) | ![st_tom_happy](demo_pic/st_tom_happy.png) |
 
 ---
 
