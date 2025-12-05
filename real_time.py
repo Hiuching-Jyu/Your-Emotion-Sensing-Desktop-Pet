@@ -186,6 +186,26 @@ class FaceDetector:
 
         return boxes
 
+def beautify(img, smooth=25, whiten=1.08):
+    """
+    Simple beautification using bilateral filter and exposure adjustment
+    """
+    # --- Smoothing: bilateral filter ---
+    smooth_img = cv2.bilateralFilter(img, d=9, sigmaColor=smooth*2, sigmaSpace=smooth)
+
+    # --- Whitening: adjust brightness and contrast ---
+    whiten_img = cv2.convertScaleAbs(smooth_img, alpha=whiten, beta=3)
+
+    # --- mix ---
+    output = cv2.addWeighted(img, 0.3, whiten_img, 0.7, 0)
+
+    # --- gaussian blur ---
+    blur = cv2.GaussianBlur(output, (0,0), sigmaX=15)
+    
+    # --- soft light blend ---
+    softlight = cv2.addWeighted(img, 0.6, blur, 0.4, 0)
+
+    return softlight
 
 # =========================
 # 4. Real-time inference loop (face + mouth)
@@ -210,6 +230,7 @@ def start_emotion_stream(callback=None, show_window=True, frame_holder=None, sta
 
     while True:
         ret, frame = cap.read()
+        frame = beautify(frame)
         if not ret:
             break
 

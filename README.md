@@ -15,7 +15,52 @@ The system supports **two control interfaces**:
 
 You may also choose to **display or hide the camera window**, and **customize the camera preview size**.
 
-[insert image — system architecture diagram]
+---
+
+## 🖼️ UI Snapshot Gallery
+
+### 🔘 Choosing Panel  
+This is the first interface where the user selects a pet character.
+
+![Choosing Panel](demo_pic/choosing_panel.png)
+
+---
+
+### 🐱 Tom – Emotion Display Examples  
+Below are the UI snapshots of the Tom desktop pet under different detected emotions.
+
+| Tom Neutral | Tom Happy |
+|-------------|-----------|
+| ![st_tom_neutral](demo_pic/st_tom_neutral.png) | ![st_tom_happy](demo_pic/st_tom_happy.png) |
+
+---
+
+### 🐶 Westie – Emotion Display Examples  
+Westie pet supports all emotion animations. Examples below:
+
+| Angry | Happy | Neutral |
+|--------|--------|----------|
+| ![angry](demo_pic/st_westie_angry.png) | ![happy](demo_pic/st_westie_happy.png) | ![neutral](demo_pic/st_westie_neutral.png) |
+
+| Sad | Surprise |
+|------|-----------|
+| ![sad](demo_pic/st_westie_sad.png) | ![surprise](demo_pic/st_westie_surprise.png) |
+
+These screenshots demonstrate how the animated GIF updates based on real-time emotion detection.
+
+---
+
+### 🖥 Streamlit Web Control Panel  
+This is the browser-based interface for adjusting pet type, scale, and live emotion monitoring.
+
+![streamlit_main](demo_pic/streamlit_main.png)
+
+---
+
+### 🪟 Tkinter / ttkbootstrap Desktop Controller  
+This standalone application allows controlling the pet without using a browser.
+
+![tkinter_main](demo_pic/tkinter_main.png)
 
 ---
 
@@ -24,54 +69,60 @@ You may also choose to **display or hide the camera window**, and **customize th
 ### 🎥 Real-Time Emotion Recognition
 - Uses webcam input to detect emotions continuously.
 - Based on **EfficientNet-B0 + dual-head mouth model**.
-- Supports 7-class FER: `Happy, Sad, Angry, Neutral, Surprise, Disgust, Fear`.
-- Includes EMA smoothing + mouth-enhanced signal fusion.
-- Camera window **can be enabled or disabled** using `show_window=True/False`.
-
-### 🐶 Animated Desktop Pet
-- Desktop-floating Tkinter window using transparent background.
-- Supports drag-to-move, auto-topmost display.
-- Multiple pets available (`westie`, `tom`).
-- Each pet includes 5 emotion animations:
-  - `happy_*.gif`
-  - `sad_*.gif`
-  - `angry_*.gif`
-  - `surprise_*.gif`
-  - `neutral_*.gif`
-
-[insert image — pet example GIF]
-
-### 💬 Emotion-Based Speech Bubbles
-- Speech bubble appears near the pet every few seconds.
-- The bubble includes:
-  - Detected emotion label + emoji
-  - Pet reaction text ("I'm here with you!", etc.)
-
-[insert image — speech bubble example]
-
-### 🖥 Two Controller Options  
-You can choose either:
-
-#### **1. Streamlit Control Panel**
-- Launch/stop pet process
-- Adjust:
-  - Pet type  
-  - Scale  
-  - Window position  
-- Preview icons included  
-- Camera feed can be displayed inside Streamlit as well
-
-[insert image — Streamlit UI screenshot]
-
-#### **2. Tkinter / ttkbootstrap Desktop Controller**
-- Native standalone UI  
-- PyInstaller packaging supported  
-- Allows local control without a browser  
-- Includes pet previews and live parameters
-
-[insert image — Tkinter UI screenshot]
+- Supports 7-class FER:  
+  `Happy, Sad, Angry, Neutral, Surprise, Disgust, Fear`
+- Includes EMA smoothing + mouth-enhanced fusion.
+- Camera window **can be enabled or disabled**.
 
 ---
+
+### 🐶 Animated Desktop Pet
+- Floating Tkinter window with transparent background.
+- Always-on-top and draggable.
+- Multiple pet characters (`westie`, `tom`).
+- Each pet includes 5 emotion animations:
+  - happy  
+  - sad  
+  - angry  
+  - surprise  
+  - neutral  
+
+---
+
+### 💬 Emotion-Based Speech Bubbles
+- Speech bubbles appear beside the pet.
+- Automatically reflects the detected emotional state.
+- Shows emoji + supportive phrases.
+
+---
+
+### 🖥 Controller Options
+
+---
+
+#### **1. Streamlit Control Panel**
+- Start / Stop pet instance  
+- Adjust pet type  
+- Change scale and window position  
+- Optional camera preview  
+- Visualized real-time emotion updates  
+
+Screenshot:  
+![Streamlit UI](demo_pic/streamlit_main.png)
+
+---
+
+#### **2. Tkinter / ttkbootstrap Desktop UI**
+- Modern appearance  
+- Works offline  
+- Includes pet preview thumbnails  
+- Uses multiprocessing to sync states  
+
+Screenshot:  
+![Tkinter UI](demo_pic/tkinter_main.png)
+
+---
+
 
 ## 🔧 System Architecture
 
