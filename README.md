@@ -18,14 +18,7 @@ You may also choose to **display or hide the camera window**, and **customize th
 ---
 
 ## 🖼️ UI Snapshot Gallery
-
-### 🔘 Choosing Panel  
-This is the first interface where the user selects a pet character.
-
-![Choosing Panel](demo_pic/choosing_panel.png)These screenshots demonstrate how the animated GIF updates based on real-time emotion detection.
-
 ---
-
 ### 🖥 Streamlit Web Control Panel  
 This is the browser-based interface for adjusting pet type, scale, and live emotion monitoring.
 
@@ -37,6 +30,12 @@ This is the browser-based interface for adjusting pet type, scale, and live emot
 This standalone application allows controlling the pet without using a browser.
 
 ![tkinter_main](demo_pic/tkinter_main.png)
+
+### 🔘 Choosing Panel  
+This is the first interface where the user selects a pet character.
+
+![Choosing Panel](demo_pic/choosing_panel.png)These screenshots demonstrate how the animated GIF updates based on real-time emotion detection.
+
 
 ---
 ### 🐶 Westie – Emotion Display Examples  
