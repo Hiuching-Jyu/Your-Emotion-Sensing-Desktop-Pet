@@ -14,9 +14,69 @@ Date: December 2025
 
 import random
 import tkinter as tk
+import time
 import threading
 from PIL import Image, ImageTk
 from real_time import start_emotion_stream
+
+# ============================
+# 0. Preset dog messages
+# ============================
+DOG_MESSAGES = [
+    "Hey, puppy, you look great today! ",
+    "What did you have for lunch?",
+    "Wish I could go for a walk right now!",
+]
+
+current_mode = "face"
+dog_loop_thread = None
+stop_dog_loop = True
+window = None
+label = None
+
+
+def dog_message_loop():
+    global stop_dog_loop, window
+    idx = 0
+
+    while not stop_dog_loop:
+        msg = DOG_MESSAGES[idx]
+
+        # create speech bubble in main thread
+        if window is not None:
+            window.after(
+                0,
+                lambda m=msg: show_speech_bubble("Puppy", custom_text=m)
+            )
+
+        idx = (idx + 1) % len(DOG_MESSAGES)
+
+        # divide wait time into small chunks to allow quick exit
+        for _ in range(40):  # 40 * 0.1s = 4 秒
+            if stop_dog_loop:
+                break
+            time.sleep(0.1)
+
+
+def switch_to_dog_mode():
+    global current_mode, dog_loop_thread, stop_dog_loop
+
+    print("[desktop_pet] Switch to DOG MODE")
+    current_mode = "dog"
+    stop_dog_loop = False
+
+    if dog_loop_thread is None or not dog_loop_thread.is_alive():
+        dog_loop_thread = threading.Thread(target=dog_message_loop, daemon=True)
+        dog_loop_thread.start()
+
+
+def switch_to_face_mode():
+    global current_mode, stop_dog_loop
+
+    print("[desktop_pet] Switch to FACE MODE")
+    current_mode = "face"
+    stop_dog_loop = True
+
 
 # ============================
 # 1. Main function to start the desktop pet
@@ -34,6 +94,8 @@ def start_pet(shared_state):
         gif_path = "./westie_gif/"
     elif pet_type == "tom":
         gif_path = "./tom_gif/"       
+    elif pet_type == "panda":
+        gif_path = "./panda_gif/"
     else:
         gif_path = "./westie_gif/"     
 
@@ -46,6 +108,8 @@ def start_pet(shared_state):
     window.wm_attributes('-transparentcolor', 'black')  # set black as transparent color
     window.wm_attributes('-topmost', True)      # keep window on top
     window.config(bg='black')
+    window.bind("1", lambda e: switch_to_dog_mode())
+    window.bind("2", lambda e: switch_to_face_mode())
 
     # ============================
     # 1.3 Make window draggable
@@ -72,7 +136,9 @@ def start_pet(shared_state):
     # ============================
     scale = float(state.get("scale", 1.0))
     if pet_type == "tom":
-        scale *= 0.2
+        scale *= 0.4
+    if pet_type == "panda":
+        scale *= 0.5
     happy_frames    = load_gif_scaled(gif_path + f"happy_{pet_type}.gif", scale)
     sad_frames      = load_gif_scaled(gif_path + f"sad_{pet_type}.gif", scale)
     angry_frames    = load_gif_scaled(gif_path + f"angry_{pet_type}.gif", scale)
@@ -98,8 +164,6 @@ def start_pet(shared_state):
         },
         daemon=True
     ).start()
-
-
 
     # ============================
     # 1.7 Start applying emotion to pet and animation loop
@@ -198,96 +262,76 @@ tk.Canvas.create_round_rect = _create_round_rect
 # ============================
 # 5. Show speech bubble
 # ============================
-def show_speech_bubble(emotion: str):
+# ========================================
+# 4. Unified speech bubble (Puppy included)
+# ========================================
+def show_speech_bubble(emotion: str, custom_text=None):
     global bubble_window, window, label
 
-    response = emotion_responses.get(emotion, "I'm here with you!")
+    # ========== Unified text ==========
+    if custom_text is not None:
+        response = custom_text
+    else:
+        response = emotion_responses.get(emotion, "I'm here with you!")
 
-    # map emotion to emoji
-    emotion_emoji = {
+    # ========== Emoji ==========
+    emoji_map = {
         "Happiness": "😺",
         "Sadness": "😢",
         "Anger": "😡",
         "Surprise": "😮",
-        "Neutral": "😐"
+        "Neutral": "😐",
+        "Puppy": "🐶"   # Puppy behaves just like a new emotion category
     }
-    emoji = emotion_emoji.get(emotion, "😐")
+    emoji = emoji_map.get(emotion, "😐")
 
-    # close the previous bubble if exists
+    # Remove previous bubble
     if bubble_window is not None:
         try:
             bubble_window.destroy()
         except:
             pass
-        bubble_window = None
+    bubble_window = None
 
-    # create new bubble
+    # Create bubble window
     bubble = tk.Toplevel(window)
+    bubble.withdraw()
     bubble.overrideredirect(True)
     bubble.attributes("-topmost", True)
-    bubble.config(bg="black") 
-    outer = tk.Frame(
-    bubble,
-    bd=0,
-    highlightthickness=0,
-    padx=2,
-    pady=2
-    )
+    bubble.config(bg="black")
+
+    outer = tk.Frame(bubble, bd=0, padx=2, pady=2)
     outer.pack()
-        
-    # white card with rounded corners
-    card = tk.Frame(
-        outer,
-        bg="white",
-        bd=0,
-        padx=10,
-        pady=6    )
+
+    card = tk.Frame(outer, bg="white", bd=0, padx=10, pady=6)
     card.pack()
 
-    # ============================
-    # 5.1 Upper layer: Detected emotion (subtle)
-    # ============================
-    header = tk.Label(
-        card,
-        text=f"Detected emotion:\n {emoji}  {emotion}",
-        font=("Segoe UI", 9, "bold"),
-        bg="white",
-        fg="#7A7A7A",    
-        anchor="w",
-        pady=2
-    )
+    # Unified header
+    header_text = f"Detected emotion:\n {emoji}  {emotion}"
+
+    header = tk.Label(card, text=header_text, font=("Segoe UI", 9, "bold"),
+                      bg="white", fg="#7A7A7A", anchor="w")
     header.pack(fill="x")
 
-    # separate line
     divider = tk.Frame(card, bg="#E0E0E0", height=1)
-    divider.pack(fill="x", pady=(3, 4))
+    divider.pack(fill="x", pady=(4, 4))
 
-    # ============================
-    # 5.2 Lower layer: Response text
-    # ============================
     text_label = tk.Label(
-        card,
-        text=response,
-        font=("Segoe UI", 11, "bold"),
-        bg="white",
-        fg="#030303",  
-        justify="left",
-        wraplength=200,
-        padx=6,
-        pady=4
+        card, text=response, font=("Segoe UI", 11, "bold"),
+        bg="white", fg="#030303", justify="left", wraplength=260
     )
     text_label.pack()
-    label.update_idletasks()
-    bubble.update_idletasks()
-    bw = bubble.winfo_width()
-    bh = bubble.winfo_height()
 
-    # bubble's position: top-right of pet
-    
+    bubble.update_idletasks()
+
+    # Position bubble relative to pet
     pet_x = window.winfo_x()
     pet_y = window.winfo_y()
     pet_w = label.winfo_width() or 200
     pet_h = label.winfo_height() or 200
+
+    bw = bubble.winfo_width()
+    bh = bubble.winfo_height()
 
     final_x = pet_x + pet_w - 5
     final_y = pet_y + pet_h - bh + 5
@@ -296,10 +340,13 @@ def show_speech_bubble(emotion: str):
     final_y = max(10, final_y)
 
     bubble.geometry(f"{bw}x{bh}+{final_x}+{final_y}")
-
+    bubble.deiconify()
     bubble_window = bubble
+
     bubble.after(3000, bubble.destroy)
 
+
+# ========================================
 # ============================
 # 6. Get emotion callback
 # ============================
@@ -322,11 +369,13 @@ def apply_emotion_to_pet():
     pop up speech bubble based on current emotion
     """
     global current_pet_emotion
-    # print(f"[desktop_pet] Emotion detected: {current_emotion_label}")
-    # print(f"[desktop_pet] Mapped to pet emotion: {current_pet_emotion}")
 
-    window.after(4000, apply_emotion_to_pet)
+    if current_mode != "face":
+        window.after(4000, apply_emotion_to_pet)
+        return
+
     show_speech_bubble(current_pet_emotion)
+    window.after(4000, apply_emotion_to_pet)
 
 
 # ============================
@@ -347,10 +396,11 @@ def update(cycle=0):
 
     frame = frames[cycle % len(frames)]
     label.configure(image=frame)
+    label.config(bg='black')
 
     # next cycle
     next_cycle = (cycle + 1) % len(frames)
-    window.after(100, update, next_cycle)   # 100ms per frame
+    window.after(100, update, next_cycle)   # 200ms per frame
 
 
 

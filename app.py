@@ -45,6 +45,7 @@ def main():
         shared_state = manager.dict({
             "running": False,
             "pet_type": "westie",
+            "mode": "face",
             "scale": 1.1,
             "x": 400,
             "y": 1000,
@@ -76,7 +77,7 @@ def main():
     # ---------------------------
     st.subheader("Preview Pets")
 
-    cols = st.columns(2)
+    cols = st.columns(3)
 
     with cols[0]:
         st.markdown("### Westie")
@@ -86,10 +87,14 @@ def main():
         st.markdown("### Tom")
         st.image("./tom_gif/preview_tom.gif", use_container_width=True)
 
+    with cols[2]:
+        st.markdown("### Panda")
+        st.image("./panda_gif/preview_panda.gif", use_container_width=True)
+
     st.divider()
 
     # 2.4 Pet settings
-    pet = st.selectbox("Choose Pet", ["westie", "tom"])
+    pet = st.selectbox("Choose Pet", ["westie", "tom", "panda"])
     shared_state["pet_type"] = pet
 
     # 2.5 Scale control

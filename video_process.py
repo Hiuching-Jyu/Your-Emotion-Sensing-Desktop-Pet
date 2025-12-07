@@ -77,7 +77,7 @@ def video_to_transparent_gif(mp4_path, gif_path, fps=15):
     for f in frames:
         rgba = np.array(f)
 
-        # 把透明区域强制变成纯白（避免黑色背景）
+        # turn transparent pixels to index 0
         rgba[rgba[:, :, 3] == 0] = [255, 255, 255, 0]
 
         processed_frames.append(
@@ -92,11 +92,11 @@ def video_to_transparent_gif(mp4_path, gif_path, fps=15):
     # convert frames to 'P' mode with adaptive palette for transparency
     frames = processed_frames
 
-    # 强制 index 0 为透明像素
+    # force same palette for all frames
     palette = frames[0].getpalette()
     frames[0].putpalette(palette)
 
-    # 设置 GIF 中 index 0 为透明
+    # set transparency index
     frames[0].info['transparency'] = 0
     print(f"Saving transparent GIF to: {gif_path}")
     frames[0].save(
@@ -124,13 +124,15 @@ def batch_convert_videos(input_dir, fps=15):
             continue
 
         mp4_path = os.path.join(input_dir, fname)
-        emotion = fname.replace("", "_tom").replace(".mp4", "")
-        gif_name = f"{emotion}_tom.gif"
+        emotion = fname.replace("", "_panda").replace(".mp4", "")
+        gif_name = f"{emotion}_panda.gif"
         gif_path = os.path.join(input_dir, gif_name)
 
         video_to_transparent_gif(mp4_path, gif_path, fps=fps)
 
 
 if __name__ == "__main__":
-    INPUT_DIR = "./tom_gif"
-    batch_convert_videos(INPUT_DIR, fps=15)
+    INPUT_DIR = "./panda_gif"
+    # batch_convert_videos(INPUT_DIR, fps=15)
+    video_to_transparent_gif(
+        mp4_path="./panda_gif/preview_panda.mp4",gif_path="./panda_gif/preview_panda.gif", fps=15)

@@ -102,10 +102,14 @@ class DesktopPetUI(tb.Window):
         self.preview_tom = ImageTk.PhotoImage(
             Image.open(resource_path("./tom_gif/preview_tom.gif")).resize(preview_size)
         )
+        self.preview_panda = ImageTk.PhotoImage(
+            Image.open(resource_path("./panda_gif/preview_panda.gif")).resize(preview_size)
+        )
 
 
         self._create_preview(preview_frame, "Westie", self.preview_westie, 0)
         self._create_preview(preview_frame, "Tom", self.preview_tom, 1)
+        self._create_preview(preview_frame, "Panda", self.preview_panda, 2)
 
         tb.Separator(self).pack(fill="x", pady=10)
 
@@ -114,7 +118,7 @@ class DesktopPetUI(tb.Window):
         self.pet_var = tb.StringVar(value="westie")
 
         pet_selector = tb.Combobox(self, textvariable=self.pet_var,
-                                   values=["westie", "tom"], bootstyle=LIGHT)
+                                   values=["westie", "tom", "panda"], bootstyle=LIGHT)
         pet_selector.pack(pady=5)
 
         # ---- Scale ----

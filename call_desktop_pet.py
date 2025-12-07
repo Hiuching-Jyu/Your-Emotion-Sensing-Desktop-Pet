@@ -14,6 +14,7 @@ Date: December 2025
 import time
 import threading
 
+
 # ============================
 # 1. Run Desktop Pet
 # ============================
