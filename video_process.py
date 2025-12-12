@@ -9,35 +9,35 @@ import ffmpeg
 def remove_background_from_frame(frame: Image.Image) -> Image.Image:
     """use rembg to remove background & enhance alpha mask"""
     
-    # step 1: 原始输出
+    # Step 1: Original Output
     out = remove(frame)
     out_np = np.array(out)
 
-    # 取 alpha 通道
+    # Retrieve the alpha channel
     alpha = out_np[:, :, 3]
 
-    # step 2: 强化 alpha，让它更 solid
-    # 二值化：防止边缘半透明
+    # Step 2: Strengthen alpha to make it more solid
+    # Binarization: Preventing edge transparency
     _, alpha_bin = cv2.threshold(alpha, 127, 255, cv2.THRESH_BINARY)
-    # step 2.5: 轻微膨胀，填补边缘毛刺
+    # Step 2.5: Slightly expand to fill in edge burrs.
     kernel_edge = np.ones((3, 3), np.uint8)
     alpha_dilated = cv2.dilate(alpha_bin, kernel_edge, iterations=1)
 
-    # 再用 dilated 的 alpha 走下面流程
+    # Then proceed with the following steps using the dilated alpha.
     alpha = alpha_dilated
-    # step 3: 形态学操作：填洞 & 去噪点
+    # Step 3: Morphological Operations: Hole Filling & Noise Removal
     kernel = np.ones((6, 6), np.uint8)
 
-    # 填补小孔洞
+    # Fill small holes
     alpha_closed = cv2.morphologyEx(alpha , cv2.MORPH_CLOSE, kernel)
 
-    # 去掉小碎点
+    # Remove the small specks
     alpha_opened = cv2.morphologyEx(alpha_closed, cv2.MORPH_OPEN, kernel)
     solid_alpha = np.where(alpha_opened > 0, 255, 0).astype(np.uint8)
-    # step 4: 用增强后的 alpha 替换回去
+    # Step 4: Replace it with the enhanced alpha.
     out_np[:, :, 3] = solid_alpha
 
-    # 返回增强后的 RGBA
+    # Return the enhanced RGBA
     return Image.fromarray(out_np)
 
 def video_to_transparent_gif(mp4_path, gif_path, fps=15):

@@ -54,12 +54,12 @@ ANIMATION_FILES = {
 
 def load_config():
     """
-    从 pet_config.json 读取配置（如果存在）
-    目前只用到 scale 和 emotion 开关，位置主要靠拖动。
+    Read configuration from pet_config.json (if present)
+    Currently only uses scale and emotion toggle; positioning is primarily achieved by dragging.
     """
     cfg = {
-        "scale": 0.5,      # 默认缩放
-        "emotion": True,   # 默认开启摄像头
+        "scale": 0.5,      # Default Zoom
+        "emotion": True,   # Camera enabled by default
     }
     path = os.path.join(os.path.dirname(__file__), "pet_config.json")
     if os.path.exists(path):
@@ -77,7 +77,7 @@ def load_config():
 
 
 # ============================
-# 2. 主窗口类：透明 + 可拖动
+# 2. Main Window Class: Transparent + Draggable
 # ============================
 
 class DesktopPet(QWidget):
@@ -87,31 +87,31 @@ class DesktopPet(QWidget):
         self.scale = scale
         self.enable_emotion = enable_emotion
 
-        # 当前宠物表情（对应 ANIMATION_FILES key）
+        # Current pet expression (corresponding to the ANIMATION_FILES key)
         self.current_pet_emotion = "Neutral"
-        self.active_emotion = None   # 当前正在播放的动画表情
+        self.active_emotion = None   # Currently playing animated emoji
 
-        # 拖动相关
+        # Drag and drop
         self.drag_position: QPoint | None = None
 
-        # 当前气泡（顶层窗口），用于跟随移动
+        # Current bubble (top-level window), used for tracking movement
         self.current_bubble: QLabel | None = None
 
-        # 窗口：无边框 + 置顶 + 透明背景
+        # Window: Borderless + Always on Top + Transparent Background
         self.setWindowFlags(
-            Qt.FramelessWindowHint |  # 无边框
-            Qt.WindowStaysOnTopHint | # 置顶
-            Qt.Tool                   # 不在 Dock / 任务栏中显示
+            Qt.FramelessWindowHint |  # Borderless
+            Qt.WindowStaysOnTopHint | # Ontop
+            Qt.Tool                   # Not displayed in the Dock / Taskbar
         )
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
-        # 动画标签（显示狗狗）
+        # Animated Tag (Shows a Dog)
         self.label = QLabel(self)
         self.label.setAttribute(Qt.WA_TranslucentBackground, True)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.label.setStyleSheet("background: transparent; border: none;")
 
-        # 表情文字标签（更大一点、更明显）
+        # Emoticon Text Label (Larger, More Prominent)
         self.emotion_label_widget = QLabel("Neutral", self)
         self.emotion_label_widget.setStyleSheet(
             """
@@ -128,30 +128,30 @@ class DesktopPet(QWidget):
         self.emotion_label_widget.move(10, 10)
         self.emotion_label_widget.show()
 
-        # 预加载所有表情对应的 QMovie
+        # Preload all corresponding QMovie files for all emojis
         self.movies = {}
         self.load_movies()
 
-        # 初始使用 Neutral 动画
+        # Initially use Neutral animation
         self.set_emotion("Neutral")
 
-        # 定时检查表情是否变化（与摄像头线程共享变量）
+        # Periodically check for facial expression changes (using variables shared with the camera thread)
         self.emotion_poll_timer = QTimer(self)
         self.emotion_poll_timer.timeout.connect(self.poll_emotion_state)
         self.emotion_poll_timer.start(200)
 
-        # 定时弹出气泡
+        # Scheduled Pop-up Bubble
         self.bubble_timer = QTimer(self)
         self.bubble_timer.timeout.connect(self.apply_emotion_to_pet)
         self.bubble_timer.setInterval(4000)
-        QTimer.singleShot(2000, self.bubble_timer.start)  # 2 秒后开始循环
+        QTimer.singleShot(2000, self.bubble_timer.start)  # Loop begins in 2 seconds
 
-        # 初始位置，之后可以拖动
+        # Initial position, which can be dragged afterward
         self.move(120, 600)
 
-    # ---------- 加载动画 ----------
+    # ---------- Loading Animation ----------
     def load_movies(self):
-        # 根据 scale 统一缩放尺寸，比如基准 500px
+        # Uniformly scale dimensions based on the scale value, such as a baseline of 500px
         base_size = 500
         target_size = int(base_size * self.scale)
         target_qsize = QSize(target_size, target_size)
@@ -167,7 +167,7 @@ class DesktopPet(QWidget):
             self.movies[emo] = movie
 
     def set_emotion(self, pet_emotion: str):
-        """切换宠物当前的动画（只在 UI 线程调用）"""
+        """Switch the pet's current animation (only call on the UI thread)"""
         if pet_emotion not in self.movies:
             pet_emotion = "Neutral"
 
@@ -185,11 +185,11 @@ class DesktopPet(QWidget):
         self.label.adjustSize()
         self.resize(self.label.sizeHint())
 
-    # ---------- 与摄像头线程共享状态 ----------
+    # ---------- Sharing State with the Camera Thread ----------
     def on_emotion_from_camera(self, label_text, conf, probs):
         """
-        被 real_time.start_emotion_stream 在线程中回调。
-        注意：这里只更新 Python 变量，不直接操作 Qt GUI。
+        Called back in the thread by real_time.start_emotion_stream.
+Note: This only updates Python variables and does not directly manipulate the Qt GUI.
         """
         print("[desktop_pet] on_emotion_from_camera is called")
         print(f"[Callback] Detected {label_text} (conf={conf:.2f})")
@@ -199,46 +199,46 @@ class DesktopPet(QWidget):
         pet_emotion = EMOTION_MAP.get(label_text, "Neutral")
         current_pet_emotion = pet_emotion
 
-        # 在实例上保存一份（由 UI 线程轮询）
+        # Keep one copy on the instance (polled by the UI thread)
         self.current_pet_emotion = pet_emotion
 
     def poll_emotion_state(self):
         """
-        UI 线程每隔 200ms 检查 pet_emotion 是否变化，如果变了就切换动画，
-        同时更新左上角的文字标签。
+        The UI thread checks for changes in pet_emotion every 200ms. If it has changed, it switches the animation
+        and simultaneously updates the text label in the top-left corner.
         """
         if self.current_pet_emotion != self.active_emotion:
             self.set_emotion(self.current_pet_emotion)
 
-        # 更新文字标签
+        # Update text labels
         self.emotion_label_widget.setText(current_emotion_label)
 
-    # ---------- 计算气泡位置（跟随狗狗） ----------
+    # Calculate bubble position (follow dog)
     def _position_bubble(self, bubble: QLabel):
         pet_geo = self.frameGeometry()
         bubble_width = bubble.width()
         bubble_height = bubble.height()
 
-        x = pet_geo.center().x() - bubble_width // 2      # 横向居中在狗狗上方
-        y = pet_geo.top() - bubble_height - 20            # 在头顶上方 20px
+        x = pet_geo.center().x() - bubble_width // 2      # Horizontally centered above the dog
+        y = pet_geo.top() - bubble_height - 20            # 20px above the top
 
-        # 防止完全飞到屏幕外（简单保护一下）
+        # Prevent it from flying completely off the screen (just a simple safeguard)
         if y < 0:
             y = pet_geo.top() + 10
 
         bubble.move(x, y)
 
-    # ---------- 气泡 ----------
+    # Bubbles
     def show_speech_bubble(self, emotion: str):
         print(f"[desktop_pet] Showing speech bubble for emotion: {emotion}")
         response = emotion_responses.get(emotion, "I'm here with you!")
 
-        # 如果已有气泡，先关掉
+        # If bubbles are already present, turn it off first.
         if self.current_bubble is not None:
             self.current_bubble.close()
             self.current_bubble = None
 
-        # ======== 外层黄色框（容器窗口）========
+        # ======== Outer Yellow Frame (Container Window) ========
         bubble_container = QLabel()
         bubble_container.setWindowFlags(
             Qt.FramelessWindowHint |
@@ -247,36 +247,36 @@ class DesktopPet(QWidget):
         )
         bubble_container.setAttribute(Qt.WA_TranslucentBackground, True)
 
-        # 外框：淡黄色、圆角、卡通边框
+        # Outer Frame: Light Yellow, Rounded Corners, Cartoon Border
         bubble_container.setStyleSheet(
             """
             QLabel {
-                background-color: #FFE9A7;          /* 外框淡黄色 */
-                border: 3px solid #E0A437;          /* 深黄色描边 */
-                border-radius: 20px;                /* 大圆角 */
+                background-color: #FFE9A7;          /* Outer frame light yellow */
+                border: 3px solid #E0A437;          /* Deep yellow outline */
+                border-radius: 20px;                /* Large Radius */
             }
             """
         )
 
-        # ======== 内层文字框 ========
+        # ======== Inner Text Box ========
         text_label = QLabel(response, bubble_container)
         text_label.setWordWrap(True)
         text_label.setFont(QFont("Comic Sans MS", 13, QFont.Bold))
         text_label.setStyleSheet(
             """
             QLabel {
-                background-color: white;             /* 内层白色框 */
-                color: black;                        /* 黑色文字 */
-                border-radius: 12px;                 /* 圆角 */
-                padding: 10px 16px;                  /* 文字 padding */
+                background-color: white;             /* Inner white frame */
+                color: black;                        /* Black text */
+                border-radius: 12px;                 /* Rounded corners */
+                padding: 10px 16px;                  /* Text padding */
             }
             """
         )
 
-        # 调整大小（先让内部文字自动排版）
+        # Resize (first let the internal text auto-layout)
         text_label.adjustSize()
 
-        # 在外框内部为文字预留 padding
+        # Reserve padding for text within the outer frame.
         padding = 12
         bubble_container.resize(
             text_label.width() + padding * 2,
@@ -284,13 +284,13 @@ class DesktopPet(QWidget):
         )
         text_label.move(padding, padding)
 
-        # ======== 把气泡放在狗狗头顶 ========
+        # ======== Place the bubble above the pet's head ========
         self._position_bubble(bubble_container)
 
         bubble_container.show()
         self.current_bubble = bubble_container
 
-        # ======== 3 秒后自动关闭 ========
+        # Automatically closes in 3 seconds
         def close_if_same():
             if self.current_bubble is bubble_container:
                 bubble_container.close()
@@ -300,13 +300,13 @@ class DesktopPet(QWidget):
 
     def apply_emotion_to_pet(self):
         """
-        每隔一段时间，根据当前情绪弹出一次气泡
+        Every so often, a bubble pops up based on your current mood.
         """
         print(f"Emotion detected: {current_emotion_label}")
         print(f"Mapped to pet emotion: {current_pet_emotion}")
         self.show_speech_bubble(self.current_pet_emotion)
 
-    # ---------- 鼠标事件：实现拖动 ----------
+    # Mouse Events: Implementing Drag & Drop
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
@@ -321,16 +321,16 @@ class DesktopPet(QWidget):
         self.drag_position = None
         event.accept()
 
-    # ---------- moveEvent：让气泡跟着狗狗一起移动 ----------
+    # ---------- moveEvent: Make the bubble follow the dog's movement ----------
     def moveEvent(self, event):
         super().moveEvent(event)
         if self.current_bubble is not None:
-            # 重新根据新的宠物位置摆放气泡
+            # Rearrange the bubbles according to the new pet positions.
             self._position_bubble(self.current_bubble)
 
 
 # ============================
-# 3. 启动函数
+# 3. Startup Function
 # ============================
 
 def main():
@@ -342,13 +342,13 @@ def main():
 
     pet = DesktopPet(scale=scale, enable_emotion=enable_emotion)
 
-    # 启动摄像头情绪检测线程
+    # Launch the camera emotion detection thread
     if enable_emotion:
         th = threading.Thread(
             target=start_emotion_stream,
             kwargs={
                 "callback": pet.on_emotion_from_camera,
-                "show_window": False,   # 如果想看摄像头，把这里改成 True
+                "show_window": False,
             },
             daemon=True
         )
